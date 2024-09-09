@@ -3,37 +3,45 @@ import json
 import os
 import sys
 import fnmatch
+import re
 
 progress_file = 'progress.json'
+playlist_file = 'playlist.m3u'
 
 # add new changes to progress file
 def save_progress(prog):
 	with open(progress_file, 'w') as f:
 		json.dump(prog, f, indent=4)
 
+# returns dict like { 01 : path/to/01,
+# 					  02 : path/to/02
+#				    }
+
+def get_episode_list(req, prog) -> dict:
+	series_folder = prog[req]["parent_dir"] # grab parent dir from prog file
+
+	episode_dict = {}
+	episode_pattern = re.compile(r'.*(\d{2}).*')
+	for file in os.listdir(series_folder):
+		match = episode_pattern.match(file)
+		if match:
+			episode_number = match.group(1)
+			episode_dict[int(episode_number)] = os.path.join(series_folder, file)
+	
+	return episode_dict
 
 # start watching a new episode, and increment episode # by 1
 def start_watch(req, prog):
-	episode_path = ""
 	episode = prog[req]["episode"] # grab episode number from prog file
-	series_folder = prog[req]["parent_dir"] # grab parent dir from prog file
 
-	# this is the glob pattern that I want to use to find new episodes. all episodes must be in this format!
-	# an example is : "Better Call Saul S01 {01}.mkv"
-	# this bit of logic down below will always look for the *01.* at the end of filename
-	# the logic is kinda weird, idk if theres an easier way to do it but it works
-	episode_pattern = f"*{episode:>02}.*"
+	episode_dict = get_episode_list(req, prog)
 
-	files = [f for f in os.listdir(series_folder) if fnmatch.fnmatch(f, episode_pattern)]
-
-	if len(files) == 1: # iff it finds one file match:
-		episode_path = os.path.join(series_folder, files[0])
-	else:
-		print('error with start_watch()')
-		exit()
+	with open(playlist_file, 'w') as f:
+		for key in sorted(k for k in episode_dict.keys() if k >= episode):
+			f.write(f"{episode_dict[key]}\n")
 
 	# runs this command in new subprocess, with no output or error messages (I think my VLC is a little buggy)
-	sp.run(['vlc', episode_path], stdout=sp.DEVNULL, stderr=sp.DEVNULL)
+	sp.run(['vlc', playlist_file], stdout=sp.DEVNULL, stderr=sp.DEVNULL)
 
 	# increment episode count and save progress file
 	prog[req]["episode"] += 1
