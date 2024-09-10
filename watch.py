@@ -2,90 +2,74 @@ import subprocess as sp
 import json
 import os
 import sys
-import fnmatch
-import re
+import threading
 
-progress_file = 'progress.json'
-playlist_file = 'playlist.m3u'
+import requests
+from requests.auth import HTTPBasicAuth
+import time
 
-# add new changes to progress file
-def save_progress(prog):
-	with open(progress_file, 'w') as f:
-		json.dump(prog, f, indent=4)
+from tools import helpers
 
-# returns dict like { 01 : path/to/01,
-# 					  02 : path/to/02
-#				    }
+url = "http://localhost:8080/requests/status.json"
 
-def get_episode_list(req, prog) -> dict:
-	series_folder = prog[req]["parent_dir"] # grab parent dir from prog file
+def check_vlc_status(prog, req, prog_file='progress.json', interval=60) -> None:
+	while True:
 
-	episode_dict = {}
-	episode_pattern = re.compile(r'.*(\d{2}).*')
-	for file in os.listdir(series_folder):
-		match = episode_pattern.match(file)
-		if match:
-			episode_number = match.group(1)
-			episode_dict[int(episode_number)] = os.path.join(series_folder, file)
-	
-	return episode_dict
+		time.sleep(interval)
+		try:
+			# Send a request to get the status of VLC
+			response = requests.get(url, auth=HTTPBasicAuth('', 'admin'))  # set password to admin
+			if response.status_code == 200:
+				status = response.json()  # Parse the JSON response
+				filename = status["information"]["category"]["meta"]["filename"] # get filename from http
+				prog[req]["episode"] = helpers.extract_episode_number(filename)
+				helpers.save_progress(prog, prog_file)
+				print(f'updated progress, on {filename}, episode {prog[req]["episode"]}')
+			else:
+				print(f"Failed to get VLC status: {response.status_code}")
+		except Exception as e:
+					print(f"Error fetching VLC status: {e}")
 
 # start watching a new episode, and increment episode # by 1
-def start_watch(req, prog):
-	episode = prog[req]["episode"] # grab episode number from prog file
-
-	episode_dict = get_episode_list(req, prog)
-
-	with open(playlist_file, 'w') as f:
-		for key in sorted(k for k in episode_dict.keys() if k >= episode):
-			f.write(f"{episode_dict[key]}\n")
-
+def start_watch(playlist_file='playlist.m3u') -> None:
+	# vlc playlist.m3u --extraintf http --http-port 8080 --http-password admin
 	# runs this command in new subprocess, with no output or error messages (I think my VLC is a little buggy)
-	sp.run(['vlc', playlist_file], stdout=sp.DEVNULL, stderr=sp.DEVNULL)
+	sp.run(['vlc', playlist_file, '--extraintf', 'http', '--http-port', '8080', '--http-password', 'admin'], stdout=sp.DEVNULL, stderr=sp.DEVNULL)
 
-	# increment episode count and save progress file
-	prog[req]["episode"] += 1
-	save_progress(prog)
+# main script --------------------------------------------------------------------------------------------------------------
+if (len(sys.argv) != 2):
+	print("py watch.py <something to watch>")
+	exit()
 
-# if element isn't found in progress.json, then add it!
-def add_element(req, prog):
-	if input(f'{req} isn\'t in the progress file... do you want to add it? \n[y]/n:  ') == 'n':
-		print('ok, see ya later!')
-		exit()
-	print(f'adding {req} to progress file...')
-	prog[req] = { "parent_dir":"", "episode":1 }
+progress_file = 'progress.json'
+playlist_file= 'playlist.m3u'
+check_interval = 10 # check status every x seconds
 
-	# get full path of parent dir
-	parent_dir = input(f'what is the full path of {req}?\n')
-	while not os.path.exists(parent_dir):
-		parent_dir = input('that directory doesn\'t exist. try again:\n')
+# will check with progress file
+request = str(sys.argv[1])
+progress = {}
 
-	prog[req]["parent_dir"] = parent_dir
-	
-	save_progress(prog)
-	print('added')
+# Load progress from progress file
+if os.path.exists(progress_file):
+	with open(progress_file, 'r') as f:
+		progress = json.load(f)
 
-def main():
-	if (len(sys.argv) != 2):
-		print("py watch.py <something to watch>")
-		exit()
+# if request isn't in progress file, then add new json element
+if request not in progress:
+	helpers.add_element(request, progress)
 
-	# will check with progress file
-	request = str(sys.argv[1])
-	progress = {}
+helpers.create_playlist(request, progress, playlist_file)
 
-	# Load progress from progress file
-	if os.path.exists(progress_file):
-		with open(progress_file, 'r') as f:
-			progress = json.load(f)
+# now start watching!
+watch_thread = threading.Thread(target=start_watch, args=(playlist_file,))
+watch_thread.start()
+# will be stuck in subprocess until the user exits
 
-	# if request isn't in progress file, then add new json element
-	if request not in progress:
-		add_element(request, progress)
+# when the user exits, then update the episode counter
+# episode = helpers.extract_episode_number(last_played)
 
-	# now start watching!
-	start_watch(request, progress)
+# progress[request]["episode"] = episode
+# helpers.save_progress(request, progress)
+check_vlc_status(progress, request, progress_file, check_interval)
 
-
-if __name__ == '__main__':
-	main()
+watch_thread.join()
