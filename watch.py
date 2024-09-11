@@ -2,12 +2,17 @@ import json
 import os
 import sys
 import threading
+import time
 
-from tools import helpers
+from tools.helpers import add_element, create_playlist
+from tools.signal_handler import *
+from tools.status_checker import *
+from tools.vlc_controller import *
 
-# main script --------------------------------------------------------------------------------------------------------------
-
+# main script -------------------------------------------------------------------------------------
+#
 def main():
+	# setup -----------------------------------------
 	if (len(sys.argv) != 2):
 		print("py watch.py <something to watch>")
 		exit()
@@ -27,23 +32,30 @@ def main():
 
 	# if request isn't in progress file, then add new json element
 	if request not in progress:
-		helpers.add_element(request, progress)
+		add_element(request, progress)
 
-	helpers.create_playlist(request, progress, playlist_file)
+	create_playlist(request, progress, playlist_file)
 
-	# now start watching!
-	watch_thread = threading.Thread(target=helpers.start_watch, args=(playlist_file,))
-	watch_thread.start()
-	# will be stuck in subprocess until the user exits
 
-	# when the user exits, then update the episode counter
-	# episode = helpers.extract_episode_number(last_played)
+	# main logic ------------------------------------
 
-	# progress[request]["episode"] = episode
-	# helpers.save_progress(request, progress)
-	helpers.check_vlc_status(progress, request, progress_file, check_interval)
+	# set up ctrl+c signal watch
+	setup_signal_handling()
 
-	watch_thread.join()
+	# start vlc thread
+	vlc_thread = threading.Thread(target=run_vlc, args=(playlist_file,))
+	vlc_thread.start()
+
+	# delay to get everything initialized
+	time.sleep(2)
+
+	# start status thread
+	status_thread = threading.Thread(target=check_vlc_status, args=(progress, request, progress_file, check_interval))
+	status_thread.start()
+
+	vlc_thread.join()
+	status_thread.join()
+	stop_vlc()
 
 if __name__ == '__main__':
 	main()

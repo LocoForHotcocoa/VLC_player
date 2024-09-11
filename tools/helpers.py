@@ -1,17 +1,12 @@
 import re
 import json
 import os
-import subprocess
-
-import requests
-from requests.auth import HTTPBasicAuth
-import time
 
 # get episode number from episode filename
 def extract_episode_number(filename) -> int:
     # Regular expression to match and capture two-digit episode numbers
     episode_pattern = re.compile(r'.*(\d{2}).*')
-    
+	
     # Search for the episode number in the filename
     match = episode_pattern.search(filename)
     if match:
@@ -73,29 +68,3 @@ def add_element(req, prog) -> None:
 	
 	save_progress(prog)
 	print(f'added {req}.')
-
-def start_watch(playlist_file='playlist.m3u') -> None:
-	# vlc playlist.m3u --extraintf http --http-port 8080 --http-password admin
-	# runs this command in new subprocess, with no output or error messages (I think my VLC is a little buggy)
-	subprocess.run(['vlc', playlist_file, '--extraintf', 'http', '--http-port', '8080', '--http-password', 'admin'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-
-def check_vlc_status(prog, req, prog_file='progress.json', interval=60) -> None:
-
-	url = "http://localhost:8080/requests/status.json"
-	while True:
-
-		time.sleep(interval)
-		try:
-			# Send a request to get the status of VLC
-			response = requests.get(url, auth=HTTPBasicAuth('', 'admin'))  # set password to admin
-			if response.status_code == 200:
-				status = response.json()  # Parse the JSON response
-				filename = status["information"]["category"]["meta"]["filename"] # get filename from http
-				prog[req]["episode"] = extract_episode_number(filename)
-				save_progress(prog, prog_file)
-				print(f'updated progress, on {filename}, episode {prog[req]["episode"]}')
-			else:
-				print(f"Failed to get VLC status: {response.status_code}")
-		except Exception as e:
-					print(f"Error fetching VLC status: {e}")
