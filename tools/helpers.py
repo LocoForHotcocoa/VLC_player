@@ -26,6 +26,7 @@ def save_progress(prog, progress_file='progress.json') -> None:
 #                     ...
 #				    }
 # used to ensure that playlist works even when some numbers are missing
+# this is probably overcomplicating it lol
 
 def _create_episode_dict(req, prog) -> dict:
 	series_folder = prog[req]["parent_dir"] # grab parent dir from prog file
@@ -41,12 +42,15 @@ def _create_episode_dict(req, prog) -> dict:
 	return episode_dict
 
 # creates the playlist.m3u file
-def create_playlist(req, prog, playlist_file='playlist.m3u') -> None:
+def create_playlist(req, prog, playlist_file='playlist.m3u') -> bool:
 	episode_dict = _create_episode_dict(req, prog)
-	
+	if len(episode_dict) == 0:
+		print("out of episodes? playlist is empty! try again!")
+		return False
 	with open(playlist_file, 'w') as f:
 		for key in sorted(episode_dict.keys()):
 			f.write(f"{episode_dict[key]}\n")
+	return True
 	
 
 # if element isn't found in progress.json, then add it!

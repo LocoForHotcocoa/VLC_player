@@ -13,8 +13,16 @@ def check_vlc_status(prog, req, prog_file='progress.json', interval=10):
 			response = requests.get(url, auth=HTTPBasicAuth('', 'admin'))  # set password to admin
 			if response.status_code == 200:
 				status = response.json()  # Parse the JSON response
-				filename = status["information"]["category"]["meta"]["filename"] # get filename from http
-				prog[req]["episode"] = extract_episode_number(filename)
+				filename = status["information"]["category"]["meta"]["filename"] # get filename from very large json object
+
+				current_time = status["time"]
+				end_time = status["length"]
+				if end_time - current_time < 120:
+					prog[req]["episode"] = extract_episode_number(filename) + 1
+					print('rounded to next episode, less than 2 min remaining')
+				else:
+					prog[req]["episode"] = extract_episode_number(filename)
+
 				save_progress(prog, prog_file)
 				print(f'updated progress, on {filename}, episode {prog[req]["episode"]}')
 			else:
@@ -23,8 +31,3 @@ def check_vlc_status(prog, req, prog_file='progress.json', interval=10):
 					print(f"Error fetching VLC status: {e}")
 		time.sleep(interval)
 		
-# def stop_status():
-# 	global isStopping
-# 	print("stopping status checker...")
-# 	isStopping = True
-# 	sys.exit(0)

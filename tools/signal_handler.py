@@ -1,7 +1,7 @@
 import signal
 import sys
 from tools.vlc_controller import stop_vlc
-# from tools.status_checker import stop_status
+
 
 def signal_handler(sig, frame):
     stop_vlc()

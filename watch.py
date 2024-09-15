@@ -34,7 +34,8 @@ def main():
 	if request not in progress:
 		add_element(request, progress)
 
-	create_playlist(request, progress, playlist_file)
+	if not create_playlist(request, progress, playlist_file):
+		sys.exit(0)
 
 
 	# main logic ------------------------------------
