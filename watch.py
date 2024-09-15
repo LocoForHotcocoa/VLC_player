@@ -50,12 +50,11 @@ def main():
 	time.sleep(2)
 
 	# start status thread
-	status_thread = threading.Thread(target=check_vlc_status, args=(progress, request, progress_file, check_interval))
+	status_thread = threading.Thread(target=check_vlc_status, args=(progress, request, progress_file, check_interval), daemon=True)
 	status_thread.start()
 
 	vlc_thread.join()
-	status_thread.join()
-	stop_vlc()
+	sys.exit(0)
 
 if __name__ == '__main__':
 	main()

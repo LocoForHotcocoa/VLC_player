@@ -13,9 +13,9 @@ def run_vlc(playlist_file='playlist.m3u'):
 
 def stop_vlc():
 	global vlc_process
-	print("quiting vlc...")
+	print("\nquiting watch.py...")
 
 	if vlc_process is not None:
 		vlc_process.terminate()
-
+	print("see ya later!")
 	sys.exit(0)

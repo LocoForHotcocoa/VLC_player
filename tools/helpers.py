@@ -4,14 +4,16 @@ import os
 
 # get episode number from episode filename
 def extract_episode_number(filename) -> int:
-    # Regular expression to match and capture two-digit episode numbers
-    episode_pattern = re.compile(r'.*(\d{2}).*')
+    # Regular expression to match and capture 2 digit episode numbers
+	matches = re.findall(r'\d{2}', filename)
 	
-    # Search for the episode number in the filename
-    match = episode_pattern.search(filename)
-    if match:
-        return int(match.group(1))  # Return the captured episode number
-    return None  # Return None if no episode number is found
+
+	# return episode number, assuming it is in the form "showname season 01 episode 02"
+	if len(matches) >= 2:
+		return int(matches[1])
+	elif len(matches) == 1:
+		return int(matches[0]) # last chance, if is in the form "showname episode 02", 
+	return None  # Return None if no episode number is found, or it 
 
 
 # add new changes to progress file
@@ -30,13 +32,11 @@ def _create_episode_dict(req, prog) -> dict:
 	current_episode = prog[req]["episode"]
 	
 	episode_dict = {}
-	episode_pattern = re.compile(r'.*(\d{2}).*')
-	for file in os.listdir(series_folder):
-		match = episode_pattern.match(file)
-		if match:
-			episode_number = int(match.group(1))
-			if episode_number >= current_episode:
-				episode_dict[int(episode_number)] = os.path.join(series_folder, file)
+	for file in sorted(os.listdir(series_folder)):
+		episode_number = extract_episode_number(file)
+		if episode_number is not None and episode_number >= current_episode:
+			# print(f'file: {file}, match: {episode_number}')
+			episode_dict[episode_number] = os.path.join(series_folder, file)
 
 	return episode_dict
 
