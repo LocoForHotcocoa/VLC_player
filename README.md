@@ -7,10 +7,10 @@ I made this to practice command line scripting in python. It utilizes these pack
 - ```threading```
 - ```requests```
 - ```signal```
-- ```re```
 - ```json```
 - ```time```
 - ```sys```
+- ```python-magic```
 
 ### First Time Use
 
@@ -26,3 +26,6 @@ Follow the instructions, making sure to include the full path of your series fol
 python watch.py good_show
 ```
 That's it! It should lauch VLC and keep track from where you left off!
+
+### quitting the app
+you can exit the app gracefully by closing out of VLC or by pressing ```ctrl+C``` in the python interface.
