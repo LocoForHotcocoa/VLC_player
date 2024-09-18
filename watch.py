@@ -4,14 +4,28 @@ import sys
 import threading
 import time
 
-from tools.helpers import add_element, create_playlist
-from tools.signal_handler import *
-from tools.status_checker import *
-from tools.vlc_controller import *
+from tools.playlist import create_playlist
+from tools.progress import add_element
+from tools.signal_handler import setup_signal_handling
+from tools.status_checker import check_vlc_status
+from tools.vlc_controller import run_vlc
 
 # main script -------------------------------------------------------------------------------------
 #
+
+# script explanation:
+# progress file contains parent directory and current filename for each show
+# 
+#	- playlist is created, starts at whatever is in progress[request]["episode"]
+#	- signal handling starts, waits for ctrl+c which will start the graceful quitting process; signal_handler.py
+#	- main thread starts, the vlc subprocess; vlc_controller.py
+#	- wait 2 seconds
+#	- daemon thread starts, the status checker, which keeps track of current episode from http interface, and increments it when necessary;
+#	  status_checker.py
+#	- end script when ctrl+c is registered.
+
 def main():
+
 	# setup -----------------------------------------
 	if (len(sys.argv) != 2):
 		print("py watch.py <something to watch>")
@@ -24,19 +38,22 @@ def main():
 	# will check with progress file
 	request = str(sys.argv[1])
 	progress = {}
-
+	
 	# Load progress from progress file
 	if os.path.exists(progress_file):
 		with open(progress_file, 'r') as f:
 			progress = json.load(f)
 
-	# if request isn't in progress file, then add new json element
+
+	# if its a new season, add element and set curr_ep to ""
 	if request not in progress:
-		add_element(request, progress)
+		add_element(progress, request, progress_file)
 
-	if not create_playlist(request, progress, playlist_file):
-		sys.exit(0)
+	parent_dir = progress[request]["parent_dir"]
+	curr_ep = progress[request]["episode"]
 
+	# if new season, playlist will start from beginning. writes to playlist file
+	playlist = create_playlist(parent_dir, curr_ep, playlist_file)
 
 	# main logic ------------------------------------
 
@@ -47,11 +64,11 @@ def main():
 	vlc_thread = threading.Thread(target=run_vlc, args=(playlist_file,))
 	vlc_thread.start()
 
-	# delay to get everything initialized
+	# delay to get everything started
 	time.sleep(2)
 
 	# start status thread
-	status_thread = threading.Thread(target=check_vlc_status, args=(progress, request, progress_file, check_interval), daemon=True)
+	status_thread = threading.Thread(target=check_vlc_status, args=(progress, request, playlist, progress_file, check_interval), daemon=True)
 	status_thread.start()
 
 	vlc_thread.join()

@@ -1,11 +1,14 @@
 import requests
 from requests.auth import HTTPBasicAuth
 import time
-from tools.helpers import save_progress, extract_episode_number
+# from tools.helpers import extract_episode_number
+from tools.progress import save_progress
+from tools.playlist import get_next_episode
+from tools.vlc_controller import stop_vlc
 
 url = "http://localhost:8080/requests/status.json"
 
-def check_vlc_status(prog, req, prog_file='progress.json', interval=10):
+def check_vlc_status(prog, req, playlist, prog_file='progress.json', interval=10):
 
 	while True:
 		try:
@@ -13,21 +16,26 @@ def check_vlc_status(prog, req, prog_file='progress.json', interval=10):
 			response = requests.get(url, auth=HTTPBasicAuth('', 'admin'))  # set password to admin
 			if response.status_code == 200:
 				status = response.json()  # Parse the JSON response
-				filename = status["information"]["category"]["meta"]["filename"] # get filename from very large json object
+				curr_ep = status["information"]["category"]["meta"]["filename"] # get filename from this super large json object
 
 				current_time = status["time"]
 				end_time = status["length"]
 				if end_time - current_time < 120:
-					prog[req]["episode"] = extract_episode_number(filename) + 1
-					print('rounded to next episode, less than 2 min remaining')
+					next_ep = get_next_episode(playlist, curr_ep)
+					if next_ep == None:
+						print('all out of episodes! pick next show!')
+					else:
+						prog[req]["episode"] = next_ep
+						print('rounded to next episode, less than 2 min remaining')
 				else:
-					prog[req]["episode"] = extract_episode_number(filename)
+					prog[req]["episode"] = curr_ep
 
 				save_progress(prog, prog_file)
-				print(f'updated progress, on {filename}, episode {prog[req]["episode"]}')
+				print(f'updated progress, episode: {prog[req]["episode"]}')
 			else:
 				print(f"Failed to get VLC status: {response.status_code}")
 		except Exception as e:
 					print(f"Error fetching VLC status: {e}")
+					stop_vlc()
 		time.sleep(interval)
 		
