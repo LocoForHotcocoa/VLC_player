@@ -1,14 +1,13 @@
 import requests
 from requests.auth import HTTPBasicAuth
 import time
-# from tools.helpers import extract_episode_number
-from tools.progress import save_progress
+
 from tools.playlist import get_next_episode
 from tools.vlc_controller import stop_vlc
 
 url = "http://localhost:8080/requests/status.json"
 
-def check_vlc_status(prog, req, playlist, prog_file='progress.json', interval=10):
+def check_vlc_status(prog, req, playlist, interval=10):
 
 	while True:
 		try:
@@ -30,7 +29,6 @@ def check_vlc_status(prog, req, playlist, prog_file='progress.json', interval=10
 				else:
 					prog[req]["episode"] = curr_ep
 
-				save_progress(prog, prog_file)
 				print(f'updated progress, episode: {prog[req]["episode"]}')
 			else:
 				print(f"Failed to get VLC status: {response.status_code}")

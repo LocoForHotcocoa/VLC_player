@@ -21,3 +21,12 @@ def add_element(progress, req, progress_filename='progress.json') -> None:
 	# save progress to file, with empty episode field
 	save_progress(progress, progress_filename)
 	print(f'added {req}.')
+
+def load_progress(progress_filename='progress.json') -> dict:
+
+	progress = {}
+	if os.path.exists(progress_filename):
+		with open(progress_filename, 'r') as f:
+			progress = json.load(f)
+
+	return progress

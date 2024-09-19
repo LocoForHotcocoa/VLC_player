@@ -1,11 +1,9 @@
-import json
-import os
 import sys
 import threading
 import time
 
 from tools.playlist import create_playlist
-from tools.progress import add_element
+from tools.progress import add_element, load_progress, save_progress
 from tools.signal_handler import setup_signal_handling
 from tools.status_checker import check_vlc_status
 from tools.vlc_controller import run_vlc
@@ -37,15 +35,12 @@ def main():
 
 	# will check with progress file
 	request = str(sys.argv[1])
-	progress = {}
 	
 	# Load progress from progress file
-	if os.path.exists(progress_file):
-		with open(progress_file, 'r') as f:
-			progress = json.load(f)
+	progress = load_progress(progress_file)
 
 
-	# if its a new season, add element and set curr_ep to ""
+	# if its a new show, add element and set curr_ep to ""
 	if request not in progress:
 		add_element(progress, request, progress_file)
 
@@ -68,11 +63,14 @@ def main():
 	time.sleep(2)
 
 	# start status thread
-	status_thread = threading.Thread(target=check_vlc_status, args=(progress, request, playlist, progress_file, check_interval), daemon=True)
+	status_thread = threading.Thread(target=check_vlc_status, args=(progress, request, playlist, check_interval), daemon=True)
 	status_thread.start()
 
 	vlc_thread.join()
-	sys.exit(0)
+	
+	# when everything is done, and vlc process is terminated, save progress to progress file
+	save_progress(progress, progress_file)
+	print("see ya later!")
 
 if __name__ == '__main__':
 	main()

@@ -1,5 +1,4 @@
 import subprocess
-import sys
 
 vlc_process = None
 
@@ -17,5 +16,3 @@ def stop_vlc():
 
 	if vlc_process is not None:
 		vlc_process.terminate()
-	print("see ya later!")
-	sys.exit(0)
