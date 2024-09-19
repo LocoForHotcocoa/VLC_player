@@ -1,5 +1,4 @@
 import signal
-import sys
 from tools.vlc_controller import stop_vlc
 
 
