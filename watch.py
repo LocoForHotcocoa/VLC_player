@@ -1,4 +1,5 @@
 import sys
+import os
 import threading
 import time
 
@@ -23,14 +24,16 @@ from tools.vlc_controller import run_vlc
 #	- end script when ctrl+c is registered.
 
 def main():
-
+    
+    
 	# setup -----------------------------------------
 	if (len(sys.argv) != 2):
 		print("py watch.py <something to watch>")
 		exit()
 
-	progress_file = 'progress.json'
-	playlist_file= 'playlist.m3u'
+	# works from any cwd
+	progress_file = os.path.join(sys.path[0], 'progress.json')
+	playlist_file = os.path.join(sys.path[0], 'playlist.m3u')
 	check_interval = 10 # check status every x seconds
 
 	# will check with progress file
@@ -60,7 +63,7 @@ def main():
 	vlc_thread.start()
 
 	# delay to get everything started
-	time.sleep(2)
+	time.sleep(3)
 
 	# start status thread
 	status_thread = threading.Thread(target=check_vlc_status, args=(progress, request, playlist, check_interval), daemon=True)
