@@ -10,7 +10,7 @@ I made this to practice command line scripting in python. It utilizes these pack
 - `json`
 - `time`
 - `sys`
-- `sys`
+- `os`
 - `python-magic`
 
 ### First Time Use
