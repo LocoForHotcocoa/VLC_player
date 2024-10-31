@@ -26,7 +26,7 @@ Follow the instructions, making sure to include the full path of your series fol
 ```bash
 python watch.py good_show
 ```
-That's it! It should lauch VLC and keep track from where you left off!
+That's it! It should launch VLC and keep track from where you left off!
 
 ### quitting the app
 you can exit the app gracefully by closing out of VLC or by pressing `ctrl+C` in the python interface.
