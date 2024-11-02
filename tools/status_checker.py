@@ -24,12 +24,12 @@ def check_vlc_status(prog, req, playlist, interval=10):
 					if next_ep == None:
 						print('all out of episodes! pick next show!')
 					else:
-						prog[req]["episode"] = next_ep
+						prog["media"][req]["episode"] = next_ep
 						print('rounded to next episode, less than 2 min remaining')
 				else:
-					prog[req]["episode"] = curr_ep
+					prog["media"][req]["episode"] = curr_ep
 
-				print(f'updated progress, episode: {prog[req]["episode"]}')
+				print(f'updated progress, episode: {prog["media"][req]["episode"]}')
 			else:
 				print(f"Failed to get VLC status: {response.status_code}")
 		except Exception as e:
