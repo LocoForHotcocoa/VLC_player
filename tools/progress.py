@@ -8,7 +8,7 @@ else:
     from tools.gui import gui
 
 # initializes the progress object if the file doesn't exist
-def _init_progress(progress_filename='progress.json') -> dict:
+def _init_progress(progress_filename: str) -> dict:
     parent_dir = input('enter the full path of your show/movie folder:\n')
     progress = {"parent_dir":"", "media":{}}
     progress["parent_dir"] = parent_dir
@@ -18,7 +18,7 @@ def _init_progress(progress_filename='progress.json') -> dict:
 
 
 # just used to save object to progress file, uses pretty indentation
-def save_progress(progress, progress_filename='progress.json') -> None:
+def save_progress(progress: dict, progress_filename: str) -> None:
     with open(progress_filename, 'w') as f:
         json.dump(progress, f, indent=4)
 
@@ -44,7 +44,7 @@ def save_progress(progress, progress_filename='progress.json') -> None:
 
 
 
-def add_element(progress, req, progress_filename='progress.json'):
+def add_element(progress: dict, req: str, progress_filename: str):
     if input(f'{req} isn\'t in the progress file... do you want to add it? [y]/n:\n').lower() == 'n':
         print('ok, see ya later!')
         exit()
@@ -54,7 +54,7 @@ def add_element(progress, req, progress_filename='progress.json'):
     result = gui(progress["parent_dir"], req)
     if result == None:
         print('ok bye!')
-        exit(0)
+        exit()
     progress["media"][req]["name"] = result
 
     # save progress to file, with empty episode field
@@ -62,7 +62,7 @@ def add_element(progress, req, progress_filename='progress.json'):
     print(f'added {req}.')
 
 
-def load_progress(progress_filename='progress.json') -> dict:
+def load_progress(progress_filename: str) -> dict:
 
     progress = {}
     # if file already exists

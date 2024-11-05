@@ -31,12 +31,20 @@ def main():
         print("py watch.py <something to watch>")
         exit()
 
+    data_dir = os.path.join(sys.path[0], 'data')
+    
     # works from any cwd
-    progress_file = os.path.join(sys.path[0], 'progress.json')
-    playlist_file = os.path.join(sys.path[0], 'playlist.m3u')
+    progress_file = os.path.join(data_dir, 'progress.json')
+    playlist_file = os.path.join(data_dir, 'playlist.m3u')
     # parent_dir = '/Users/matthewbradley/Movies/torrents'
-
-    check_interval = 10 # check status every x seconds
+    
+    try:
+        os.makedirs(data_dir, exist_ok=True)
+    except Exception as e:
+        print(f'error opening data directory: \n{e.with_traceback}')
+        exit(1)
+    
+    check_interval = 3 # check status every x seconds
     
     # will check with progress file
     request = str(sys.argv[1])

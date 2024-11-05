@@ -7,7 +7,7 @@ from tools.vlc_controller import stop_vlc
 
 url = "http://localhost:8080/requests/status.json"
 
-def check_vlc_status(prog, req, playlist, interval=10):
+def check_vlc_status(prog: dict, req: str, playlist: str, interval: float) -> None:
 
 	while True:
 		try:

@@ -12,6 +12,8 @@ I made this to practice command line scripting in python. It utilizes these pack
 - `sys`
 - `os`
 - `python-magic`
+- `curses`
+- `fuzzywuzzy`
 
 ### First Time Use
 
@@ -20,7 +22,7 @@ python watch.py good_show
 ```
 (you can use any title for your show)
 
-Follow the instructions, making sure to include the full path of your series folder, and it will launch VLC automatically.
+Follow the instructions, making sure to include the full path of your movie directory, and select the name of the show and it will launch VLC automatically.
 
 ### Subsequent Use
 ```bash

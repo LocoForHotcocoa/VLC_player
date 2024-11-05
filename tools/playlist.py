@@ -1,7 +1,7 @@
 from tools.video_checker import is_video_file
 import os
 
-def create_playlist(parent_dir: str, curr_episode: str, playlist_filename='playlist.m3u') -> list[str]:
+def create_playlist(parent_dir: str, curr_episode: str, playlist_filename: str) -> list[str]:
 
 	# gives ordered list of all video files in the current directory
 	playlist = [file for file in sorted(os.listdir(parent_dir)) if is_video_file(os.path.join(parent_dir,file))]
@@ -18,13 +18,13 @@ def create_playlist(parent_dir: str, curr_episode: str, playlist_filename='playl
 	return playlist
 
 
-def write_to_playlist_file(playlist: list[str], parent_dir: str, playlist_filename='playlist.m3u') -> None:
+def write_to_playlist_file(playlist: list[str], parent_dir: str, playlist_filename: str) -> None:
 	# writes 'parent_dir/episode' to playlist_file
 	with open(playlist_filename, 'w') as f:
 		for ep in playlist:
 			f.write(f'{os.path.join(parent_dir, ep)}\n')
 
-def get_next_episode(playlist: list[str], curr_episode: str):
+def get_next_episode(playlist: list[str], curr_episode: str) -> (None | str):
 	current_index = playlist.index(curr_episode)
 	# if current index is at the end of the playlist, then the season is over!
 	if current_index == len(playlist) - 1:
