@@ -13,6 +13,8 @@ def get_files_in_directory(directory):
 # Curses app for fuzzy file finder
 def fuzzy_finder(stdscr, directory, query) -> (str | None):
     curses.curs_set(1)  # Enable cursor for typing
+    curses.start_color()
+    curses.use_default_colors() # use existing terminal color theme
     files = get_files_in_directory(directory)
     selected = 0        # Selected item index
 
